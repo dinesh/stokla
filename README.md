@@ -1,11 +1,14 @@
 # PGQueue
 
+`pg-queue` is a queue for Ruby and PostgreSQL that manages jobs using advisory locks, which gives it several advantages over other RDBMS-backed queues. 
+
+It is designed to have better performance and reliable than [DelayedJob](https://github.com/collectiveidea/delayed_job). Workers don't block each other when trying to lock jobs, as often occurs with row level locking. This allows for very high throughput with a large number of workers. 
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-```ruby
+```
 gem 'pg-queue'
 ```
 
@@ -19,6 +22,51 @@ Or install it yourself as:
 
 ## Usage
 
+You can configure `PGQueue` using `configure` block -
+
+```
+PGQueue.configure do |config|
+  config.dbname = 'test'
+  config.username = '...'
+  config.password = '...'
+  
+  
+  config.schema = 'public'      # name of postgres schema 
+  config.table_name = 'jobs'    # name of postgres table
+end
+```
+
+To create a queue -
+
+```
+queue = PGQueue::Queue.new('mailer')
+queue.enqueue({user_id: 1, subject: 'Welcome'})
+```
+
+To consume a job item into another thread or process -
+
+```
+work = queue.take
+if work
+  payload = work.item.data
+  @user = User.find payload[:user_id]
+  UserMailer.welcome_email(user: @user, subject: payload[:subject]).deliver_now
+end
+
+## afterward delete the job from the queue
+queue.delete(work)
+
+```
+
+You can also provide an block to process job 
+
+```
+queue.take do |work|
+  payload = work.item.data
+  @user = User.find payload[:user_id]
+  UserMailer.welcome_email(user: @user, subject: payload[:subject]).deliver_now
+end
+```
 
 ## Development
 

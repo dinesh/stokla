@@ -33,8 +33,8 @@ module PGQueue
     def pool
       @pool ||= Pond.new(maximum_size: self.pool_size) do
           PG.connect(
-            dbname:   self.dbname, 
-            user:     self.username, 
+            dbname:   self.dbname,
+            user:     self.username,
             password: self.password,
             port:     self.port
           )

@@ -30,7 +30,7 @@ module PGQueue
           yield(locking_item)
           delete(locking_item)
         rescue => e
-          PGQueue.logger.warn("Got exception while processing item: #{locking_item.item.id}. Queuing again.")
+          PGQueue.logger.warn("Got exception while processing item: #{locking_item.item.id}. Will try again.")
           unlock_item(locking_item)
         end
       else
@@ -95,7 +95,7 @@ module PGQueue
       qlocks = execute(sql, db_table_oid)
       sql    = sql_statement(:select_lock)
 
-      locks.values.each{|r| execute(sql, r[0], queue_name, debug: true) }
+      locks.values.each{|r| execute(sql, r[0], queue_name) }
     end
 
     def add_thread_lock(record_id, conn_object_id)
