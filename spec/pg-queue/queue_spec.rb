@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-module PGQueue
+module Stokla
   describe Queue do
     let(:queue){ Queue.new(qname) }
     let(:qname){ 'queue' }
@@ -13,7 +13,7 @@ module PGQueue
       allow(conn).to receive(:exec_params) { |sql, *params| result }
     }
 
-    after { PGQueue.instance_variable_set(:"@pool", nil) }
+    after { Stokla.instance_variable_set(:"@pool", nil) }
 
     describe "#take" do
       it 'returns nil without jobs' do
@@ -48,7 +48,7 @@ module PGQueue
           allow(queue).to receive(:locking_take).and_return(item)
 
           expect(queue).to receive(:unlock_item).with(item)
-          expect(PGQueue.logger).to receive(:warn)
+          expect(Stokla.logger).to receive(:warn)
 
           queue.take { raise "BOOM" }
         end

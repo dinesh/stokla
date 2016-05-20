@@ -1,17 +1,17 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'pg-queue/version'
+require 'stokla/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "pg-queue"
-  spec.version       = PGQueue::VERSION
+  spec.name          = "stokla"
+  spec.version       = Stokla::VERSION
   spec.authors       = ["dinesh"]
   spec.email         = ["dineshyadav.iiit@gmail.com"]
 
   spec.summary       = %q{A Ruby job queue using PostgreSQL's advisory locks for speed and reliability}
   spec.description   = %q{A Ruby job queue using PostgreSQL's advisory locks for speed and reliability}
-  spec.homepage      = "https://github.com/dinesh/pg-queue"
+  spec.homepage      = "https://github.com/dinesh/stockla"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

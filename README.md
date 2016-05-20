@@ -1,6 +1,6 @@
-# PGQueue
+# Stokla
 
-`pg-queue` is a queue for Ruby and PostgreSQL that manages jobs using advisory locks, which gives it several advantages over other RDBMS-backed queues. 
+`stokla` is a queue for Ruby and PostgreSQL that manages jobs using advisory locks, which gives it several advantages over other RDBMS-backed queues. 
 
 It is designed to have better performance and reliable than [DelayedJob](https://github.com/collectiveidea/delayed_job). Workers don't block each other when trying to lock jobs, as often occurs with row level locking. This allows for very high throughput with a large number of workers. 
 
@@ -9,7 +9,7 @@ It is designed to have better performance and reliable than [DelayedJob](https:/
 Add this line to your application's Gemfile:
 
 ```
-gem 'pg-queue'
+gem 'stokla'
 ```
 
 And then execute:
@@ -18,14 +18,14 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install pg-queue
+    $ gem install stokla
 
 ## Usage
 
-You can configure `PGQueue` using `configure` block -
+You can configure `Stokla` using `configure` block -
 
 ```
-PGQueue.configure do |config|
+Stokla.configure do |config|
   config.dbname = 'test'
   config.username = '...'
   config.password = '...'
@@ -39,7 +39,7 @@ end
 To create a queue -
 
 ```
-queue = PGQueue::Queue.new('mailer')
+queue = Stokla::Queue.new('mailer')
 queue.enqueue({user_id: 1, subject: 'Welcome'})
 ```
 

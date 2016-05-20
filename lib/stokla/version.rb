@@ -1,4 +1,4 @@
 
-module PGQueue
+module Stokla
   VERSION = "0.1.0"
 end

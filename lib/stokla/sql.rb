@@ -1,5 +1,5 @@
 
-module PGQueue
+module Stokla
   module SQL
     STATEMENTS = {
       :lock_job => %{
@@ -75,9 +75,9 @@ module PGQueue
     end
 
     def connection_for_lock(conn_id)
-      conn  = PGQueue.pool.available.find{|c| c.object_id == conn_id }
+      conn  = Stokla.pool.available.find{|c| c.object_id == conn_id }
       unless conn
-        av  = PGQueue.allocated.find{|k, v| v.object_id == conn_id }
+        av  = Stokla.pool.allocated.find{|k, v| v.object_id == conn_id }
         conn = av[1] if av
       end
       conn
@@ -128,15 +128,15 @@ module PGQueue
     end
 
     def table_name
-      PGQueue.table_name
+      Stokla.table_name
     end
 
     def schema
-      PGQueue.schema
+      Stokla.schema
     end
 
     def with_conn
-      PGQueue.pool.checkout do |conn|
+      Stokla.pool.checkout do |conn|
         yield(conn)
       end
     end

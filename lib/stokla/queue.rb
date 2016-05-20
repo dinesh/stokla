@@ -1,7 +1,7 @@
 require 'yaml'
 require_relative "sql"
 
-module PGQueue
+module Stokla
   class LockedItem < Struct.new(:item, :lock); end
   class QueueItem < Struct.new(:id, :name, :priority, :data); end
 
@@ -30,7 +30,7 @@ module PGQueue
           yield(locking_item)
           delete(locking_item)
         rescue => e
-          PGQueue.logger.warn("Got exception while processing item: #{locking_item.item.id}. Will try again.")
+          Stokla.logger.warn("Got exception while processing item: #{locking_item.item.id}. Will try again.")
           unlock_item(locking_item)
         end
       else
@@ -69,7 +69,7 @@ module PGQueue
     def delete_item(item)
       item_id = item.id
 
-      if PGQueue.delete_item
+      if Stokla.delete_item
         execute("DELETE FROM #{quoted_table_name} WHERE id = $1", item_id)
       else
         execute("UPDATE #{quoted_table_name} SET deleted = true WHERE id = $1", item_id)

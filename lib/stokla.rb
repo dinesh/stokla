@@ -1,14 +1,14 @@
 require 'pg'
 require 'pond'
 require 'logger'
-require_relative "pg-queue/version"
+require_relative "stokla/version"
 
-module PGQueue
+module Stokla
   class << self
     attr_accessor :logger, :log_level, :delete_item
     attr_accessor :schema, :dbname, :table_name, :username, :password, :port, :pool_size
 
-    DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', pool_size: 5 }
+    DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', pool_size: 5, log_level: Logger::INFO }
 
     def configure(options={})
       if block_given?
@@ -25,7 +25,7 @@ module PGQueue
           Rails.logger
         else
           logger = Logger.new(STDOUT, log_level: self.log_level)
-          logger.progname = 'PGQueue'
+          logger.progname = 'Stokla'
           logger
         end
     end
@@ -43,4 +43,4 @@ module PGQueue
   end
 end
 
-require_relative 'pg-queue/queue'
+require_relative 'stokla/queue'

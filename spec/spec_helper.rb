@@ -1,6 +1,6 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require 'pg-queue'
+require 'stokla'
 
-PGQueue.configure do |c|
+Stokla.configure do |c|
   c.dbname = 'foobar'
 end
