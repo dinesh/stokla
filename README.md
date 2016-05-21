@@ -26,15 +26,12 @@ You can configure `Stokla` using `configure` block -
 
 ```
 Stokla.configure do |config|
-  config.dbname = 'test'
-  config.username = '...'
-  config.password = '...'
-  
-  
   config.schema = 'public'      # name of postgres schema 
   config.table_name = 'jobs'    # name of postgres table
+  config.pool      = ...        # database pool
 end
 ```
+It supports popular database pools like activerecord, sequel, pond and connection_pool.
 
 To create a queue -
 

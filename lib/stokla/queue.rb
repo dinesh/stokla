@@ -61,6 +61,7 @@ module Stokla
           add_thread_lock(record['id'], connection.object_id)
           record['data'] = YAML::load(record['data'])
           item = QueueItem.new(record['id'], record['name'], record['priority'], record['data'])
+          Stokla.logger.debug "#{connection.object_id} took job:#{record['id']} with payload: #{record['data']}"
           LockedItem.new(item, [table_oid, item.id])
         end
       end
@@ -77,15 +78,17 @@ module Stokla
     end
 
     def unlock_item(item)
-      qlock = @qlocks.find{|t| t[:lock_id] == item.lock[1] }
-      conn  = connection_for_lock(qlock[:conn_id])
+      qlock = nil
+      sync { qlock = @qlocks.find{|t| t[:lock_id] == item.lock[1] } }
 
-      execute(
-        sql_statement(:unlock_lock),
-        item.lock[0],
-        item.lock[1],
-        connection: conn
-      )
+      connection_for_lock(qlock[:conn_id]) do |connection|
+        execute(
+          sql_statement(:unlock_lock),
+          item.lock[0],
+          item.lock[1],
+          connection: connection
+        )
+      end
 
       sync { @qlocks.delete(qlock) }
     end

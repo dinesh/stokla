@@ -1,12 +1,10 @@
-require 'pg'
-require 'pond'
-require 'logger'
 require_relative "stokla/version"
+require_relative "stokla/pool"
 
 module Stokla
   class << self
-    attr_accessor :logger, :log_level, :delete_item
-    attr_accessor :schema, :dbname, :table_name, :username, :password, :port, :pool_size
+    attr_accessor :logger, :log_level, :delete_item, :_pool
+    attr_accessor :schema, :table_name, :pool_size
 
     DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', pool_size: 5, log_level: Logger::INFO }
 
@@ -24,6 +22,7 @@ module Stokla
         if defined?(Rails)
           Rails.logger
         else
+          require 'logger'
           logger = Logger.new(STDOUT, log_level: self.log_level)
           logger.progname = 'Stokla'
           logger
@@ -31,14 +30,23 @@ module Stokla
     end
 
     def pool
-      @pool ||= Pond.new(maximum_size: self.pool_size) do
-          PG.connect(
-            dbname:   self.dbname,
-            user:     self.username,
-            password: self.password,
-            port:     self.port
-          )
-      end
+      self._pool.tap{|p| raise "Stokla.pool is not set." unless p }
+    end
+
+    def pool=(apool)
+      self._pool = 
+        case apool.class.to_s
+        when 'ActiveRecord::ConnectionAdapters::ConnectionPool'
+          Adapter::ActiveRecord.new(apool)
+        when "Sequel::Postgres::Database"
+          Adapter::Sequel.new(apool)
+        when "ConnectionPool"
+          Adapter::ConnectionPool.new(apool)
+        when "Pond"
+          Adapter::Pond.new(apool)
+        else
+          raise "Usupported pool type: #{apool.to_s}"
+        end
     end
   end
 end

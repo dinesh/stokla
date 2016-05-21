@@ -74,12 +74,9 @@ module Stokla
       STATEMENTS[task].gsub(/_table_name_/, quoted_table_name)
     end
 
-    def connection_for_lock(conn_id)
-      conn  = Stokla.pool.available.find{|c| c.object_id == conn_id }
-      unless conn
-        av  = Stokla.pool.allocated.find{|k, v| v.object_id == conn_id }
-        conn = av[1] if av
-      end
+    def connection_for_lock(conn_object_id)
+      conn = Stokla.pool.get(conn_object_id)
+      yield(conn) if block_given?
       conn
     end
 
@@ -120,7 +117,7 @@ module Stokla
     end
 
     def db_table_oid
-      execute(sql_statement(:get_table_oid), schema, table_name).first['table_oid']
+      execute(sql_statement(:get_table_oid), schema, table_name, debug: false).first['table_oid']
     end
 
     def create_table!
@@ -135,10 +132,8 @@ module Stokla
       Stokla.schema
     end
 
-    def with_conn
-      Stokla.pool.checkout do |conn|
-        yield(conn)
-      end
+    def with_conn(&block)
+      Stokla.pool.checkout(&block)
     end
   end
 end
