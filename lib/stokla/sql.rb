@@ -10,6 +10,7 @@ module Stokla
             FROM _table_name_ as q 
             WHERE q.name = $2
             AND deleted IS FALSE 
+            AND retries < $3
             ORDER BY priority, id 
             LIMIT 1
           ) AS t1
@@ -20,7 +21,8 @@ module Stokla
                 SELECT q 
                 FROM _table_name_ as q 
                 WHERE q.name = $2
-                AND deleted IS FALSE _qlocks_not_in
+                AND deleted IS FALSE 
+                AND retries < $3 _qlocks_not_in
                 AND (priority, id) > (queued.priority, queued.id)
                 ORDER BY priority, id LIMIT 1
               ) as q 
@@ -51,8 +53,10 @@ module Stokla
         CREATE TABLE _table_name_ (
           id bigserial,
           name text NOT NULL,
-          priority integer NOT NULL DEFAULT 1,
+          priority integer NOT NULL DEFAULT 100,
           data text,
+          retries integer DEFAULT 0,
+          error text,
           deleted boolean NOT NULL DEFAULT false,
           constraint  pg_queue_pkey 
             primary key (name, priority, id, deleted)
@@ -69,7 +73,9 @@ module Stokla
         WHERE name = $2
       }.freeze,
 
-      :count_items => %{SELECT count(*) AS total from _table_name_ where deleted IS FALSE}.freeze
+      :count_items => %{SELECT count(*) AS total from _table_name_ where deleted IS FALSE}.freeze,
+
+      :on_error => %{UPDATE _table_name_ SET retries=retries+1,error=$2 WHERE id=$1}.freeze
     }
 
     def sql_statement(task, options={})

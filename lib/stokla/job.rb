@@ -25,10 +25,6 @@ module Stokla
         base.instance_variable_set(:@queue_name, queue_name)
         base.instance_variable_set(:@priority, priority)        
       end
-
-      def pending
-        Stokla.pending
-      end
       
       def queue
         @queue ||= Queue.new(queue_name)
@@ -44,8 +40,9 @@ module Stokla
               job = Kernel.const_get(klass_name).new
               job.run(*args)
               queue.delete_item(work)
-            rescue => e
-              Stokla.logger.error "Got error #{e} in #{klass_name}, will retry."
+            rescue => error
+              queue.on_error(work.item.id, error)
+              Stokla.logger.error "Got error #{error} in #{klass_name}, will retry."
             ensure
               queue.unlock_item(work)
             end

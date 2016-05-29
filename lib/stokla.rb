@@ -5,9 +5,9 @@ require_relative "stokla/pool"
 module Stokla
   class << self
     attr_accessor :logger, :log_level, :delete_item, :_pool
-    attr_accessor :schema, :table_name
+    attr_accessor :schema, :table_name, :max_attempts
 
-    DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', log_level: Logger::INFO }
+    DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', max_attempts: 5 }
 
     def configure(options={})
       if block_given?
@@ -27,8 +27,8 @@ module Stokla
         if defined?(Rails)
           Rails.logger
         else
-          logger = Logger.new(STDOUT, log_level: self.log_level)
-          logger.progname = 'Stokla'
+          logger = Logger.new(STDOUT, log_level: Logger::INFO)
+          logger.progname = 'stok'
           logger
         end
     end

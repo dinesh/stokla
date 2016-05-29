@@ -69,6 +69,10 @@ module Stokla
       end
     end
 
+    def on_error(row_id, error)
+      execute(sql_statement(:on_error), row_id, error.message)
+    end
+
     private
 
     def locking_take
@@ -83,7 +87,7 @@ module Stokla
           statement = sql_statement(:lock_job).gsub(/_qlocks_not_in/, qlock_not_in)
         }
 
-        if record = connection.exec_params(statement, [table_oid, queue_name]).first
+        if record = connection.exec_params(statement, [table_oid, queue_name, Stokla.max_attempts]).first
           add_thread_lock(record['id'], connection.object_id)
           record['data'] = YAML::load(record['data'])
           item = QueueItem.new(record['id'], record['name'], record['priority'], record['data'])
