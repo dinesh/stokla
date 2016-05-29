@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'pg'
 
 module Stokla
   describe Queue do
@@ -8,12 +9,11 @@ module Stokla
     let(:result) { instance_double(PG::Result, values: []) }
 
     before {
+      Stokla.pool = double(checkout: conn)
       allow(PG).to receive(:connect).and_return(conn)
       allow(conn).to receive(:quote_ident) { |sql| sql }
       allow(conn).to receive(:exec_params) { |sql, *params| result }
     }
-
-    after { Stokla.instance_variable_set(:"@pool", nil) }
 
     describe "#take" do
       it 'returns nil without jobs' do

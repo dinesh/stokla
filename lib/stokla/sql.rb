@@ -67,7 +67,9 @@ module Stokla
         SELECT pg_advisory_unlock(cast($1 as int), cast(q.id as int)) 
         FROM _table_name_ AS q 
         WHERE name = $2
-      }.freeze
+      }.freeze,
+
+      :count_items => %{SELECT count(*) AS total from _table_name_ where deleted IS FALSE}.freeze
     }
 
     def sql_statement(task, options={})
@@ -84,7 +86,7 @@ module Stokla
       execute("DELETE FROM #{quoted_table_name} where name = $1", queue_name)
     end
 
-    def execute sql, *params, connection: nil, debug: false
+    def execute sql, *params, connection: nil, debug: true
       if connection
         puts "#{connection.object_id}(#{!connection.finished?}): #{sql} #{params.inspect}" if debug
         connection.exec_params(sql, params)

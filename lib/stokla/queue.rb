@@ -39,8 +39,34 @@ module Stokla
     end
 
     def delete(locked_item)
-      delete_item(locked_item.item)
+      delete_item(locked_item)
       unlock_item(locked_item)
+    end
+
+    def unlock_item(item)
+      qlock = nil
+      sync { qlock = @qlocks.find{|t| t[:lock_id] == item.lock[1] } }
+
+      connection_for_lock(qlock[:conn_id]) do |connection|
+        execute(
+          sql_statement(:unlock_lock),
+          item.lock[0],
+          item.lock[1],
+          connection: connection
+        )
+      end
+
+      sync { @qlocks.delete(qlock) }
+    end
+
+    def delete_item(locking_item)
+      item_id = locking_item.item.id
+
+      if Stokla.delete_item
+        execute("DELETE FROM #{quoted_table_name} WHERE id = $1", item_id)
+      else
+        execute("UPDATE #{quoted_table_name} SET deleted = true WHERE id = $1", item_id)
+      end
     end
 
     private
@@ -67,32 +93,6 @@ module Stokla
       end
     end
 
-    def delete_item(item)
-      item_id = item.id
-
-      if Stokla.delete_item
-        execute("DELETE FROM #{quoted_table_name} WHERE id = $1", item_id)
-      else
-        execute("UPDATE #{quoted_table_name} SET deleted = true WHERE id = $1", item_id)
-      end
-    end
-
-    def unlock_item(item)
-      qlock = nil
-      sync { qlock = @qlocks.find{|t| t[:lock_id] == item.lock[1] } }
-
-      connection_for_lock(qlock[:conn_id]) do |connection|
-        execute(
-          sql_statement(:unlock_lock),
-          item.lock[0],
-          item.lock[1],
-          connection: connection
-        )
-      end
-
-      sync { @qlocks.delete(qlock) }
-    end
-
     def clear_locks
       sql    = %{SELECT classid, objid from pg_locks where classid = $1 and locktype = 'advisory'}
       qlocks = execute(sql, db_table_oid)
@@ -109,6 +109,13 @@ module Stokla
 
     def sync
       @mutex.synchronize { yield }
+    end
+
+    def self.pending
+      Stokla.pool.checkout do |conn|
+        sql = SQL::STATEMENTS[:count_items].gsub(/_table_name_/, Stokla.table_name)
+        conn.exec(sql).first['total'].to_i
+      end
     end
   end
 end
