@@ -1,4 +1,3 @@
-
 module Stokla
   class RakeTasks
     include Rake::DSL if defined?(Rake::DSL)
@@ -6,16 +5,16 @@ module Stokla
     def install_tasks
       namespace :stokla do
         desc "Process jobs using background workers"
-        task :work do 
+        task :work do
           $stdout.sync = true
           Rails.application.eager_load! if defined?(::Rails) && Rails.respond_to?(:application)
-          Stokla.logger.log_level  = Logger.const_get((ENV['STOKLA_LOG_LEVEL'] || 'INFO').upcase)
+          Stokla.logger.level  = Logger.const_get((ENV['STOKLA_LOG_LEVEL'] || 'INFO').upcase)
           stop = false
 
           %w( INT TERM ).each do |signal|
-            trap(signal) {stop = true}
+            trap(signal) { stop = true }
           end
-
+          
           loop do
             sleep 0.01
             Stokla::Job.work

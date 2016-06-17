@@ -22,25 +22,36 @@ Or install it yourself as:
 
 ## Usage
 
-You can configure `Stokla` using `configure` block -
+#### Setup & Configuration
+
+You can configure `Stokla` using
 
 ```
 Stokla.configure do |config|
-  config.schema = 'public'      # name of postgres schema 
-  config.table_name = 'jobs'    # name of postgres table
-  config.pool      = ...        # database pool
+  config.pool                       # type of pool (activerecord, pond, connection_pool, sequel pool )
+  config.schema                     # name of postgres schema ('public' by default)
+  config.table_name                 # name of postgres jobs table ('jobs' by default )
+  config.logger                     # logger instance
+  config.delete_after_completion    # delete the work item after completion ( false by default )
+  config.max_attempts               # number of times to retry in case of error ( 10 by default )
 end
-```
-It supports popular database pools like activerecord, sequel, pond and connection_pool.
 
-To create a queue -
+```
+
+It supports several popular database pools like activerecord, sequel, pond and connection_pool. 
+
+#### Adding Job
+
+To create a queue and enqueue a work item -
 
 ```
 queue = Stokla::Queue.new('mailer')
 queue.enqueue({user_id: 1, subject: 'Welcome'})
 ```
 
-To consume a job item into another thread or process -
+#### Consume Job
+
+To consume a work item into another thread or process -
 
 ```
 work = queue.take
@@ -50,12 +61,12 @@ if work
   UserMailer.welcome_email(user: @user, subject: payload[:subject]).deliver_now
 end
 
-## afterward delete the job from the queue
+## afterwards delete the job from the queue
 queue.delete(work)
 
 ```
 
-You can also provide an block to process job 
+You can also provide an block to process a work item ( It will automatically delete the item from the queue after successfull completion ) 
 
 ```
 queue.take do |work|
@@ -64,6 +75,37 @@ queue.take do |work|
   UserMailer.welcome_email(user: @user, subject: payload[:subject]).deliver_now
 end
 ```
+
+You can also define your task by inheriting `Stokla::Job` which should override `run` method -
+
+```
+class HelloTask < Stokla::Job
+
+  # You can optionally set queue_name and priority like
+  # @queue_name = 'hello'
+  # @priority   = 10
+  
+  def run(msg)
+    puts "Hello #{msg} from work"
+  end
+end
+
+```
+
+You can just run following code to ingest a work -
+
+    HelloTask.new('world').enqueue
+  
+
+You can also optionally set `queue_name`(name of queue) and `priority`. Jobs with lower priority will be processed faster than higher ones. By default all of the jobs will have priority as 100. 
+
+Stokla also provides a background worker as a rake task. You can include rake task into your `Rakefile` and run following command -
+
+    require 'stokla/rake'
+
+    rake stokla:work    # to process jobs using background workers" 
+    rake stokla:drop    # to drop job table
+    rake stokla:clear   # to clear job table
 
 ## Development
 

@@ -62,7 +62,7 @@ module Stokla
     def delete_item(locking_item)
       item_id = locking_item.item.id
 
-      if Stokla.delete_item
+      if Stokla.delete_after_completion
         execute("DELETE FROM #{quoted_table_name} WHERE id = $1", item_id)
       else
         execute("UPDATE #{quoted_table_name} SET deleted = true WHERE id = $1", item_id)

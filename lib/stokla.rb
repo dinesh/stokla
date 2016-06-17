@@ -4,7 +4,7 @@ require_relative "stokla/pool"
 
 module Stokla
   class << self
-    attr_accessor :logger, :log_level, :delete_item, :_pool
+    attr_accessor :logger, :delete_after_completion, :_pool
     attr_accessor :schema, :table_name, :max_attempts
 
     DEFAULT_OPTS = { schema: 'public', table_name: 'jobs', max_attempts: 5 }

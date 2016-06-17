@@ -10,6 +10,10 @@ module Stokla
 
     def run(*args); end
 
+    def logger
+      Stokla.logger
+    end
+
     def enqueue
       data = {
         :klass_name => self.class.name,
@@ -33,21 +37,33 @@ module Stokla
       def work
         if work = queue.take
           klass_name = work.item.data[:klass_name]
-          args  = work.item.data[:args]
+          args       = work.item.data[:args]
 
           if klass_name && args
             begin
-              job = Kernel.const_get(klass_name).new
+              job = constantize(klass_name).new
               job.run(*args)
               queue.delete_item(work)
             rescue => error
               queue.on_error(work.item.id, error)
-              Stokla.logger.error "Got error #{error} in #{klass_name}, will retry."
+              logger.error "Got error #{error} in #{klass_name}, will retry."
             ensure
               queue.unlock_item(work)
             end
           end
         end
+      end
+
+      private
+
+      def constantize(class_name)
+        return unless class_name
+        return class_name if class_name.is_a?(Class)
+        constant = Object
+        class_name.split('::').each do |name|
+          constant = constant.const_get(name) || constant.const_missing(name)
+        end
+        constant
       end
     end
   end
