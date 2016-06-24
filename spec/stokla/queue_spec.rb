@@ -5,11 +5,11 @@ module Stokla
   describe Queue do
     let(:queue){ Queue.new(qname) }
     let(:qname){ 'queue' }
-    let(:conn){ instance_double(PG::Connection) }
+    let(:conn){ instance_double(PG::Connection, finished?: true) }
     let(:result) { instance_double(PG::Result, values: []) }
 
     before {
-      Stokla.pool = double(checkout: conn)
+      Stokla.pool = double(checkout: conn, get: conn)
       allow(PG).to receive(:connect).and_return(conn)
       allow(conn).to receive(:quote_ident) { |sql| sql }
       allow(conn).to receive(:exec_params) { |sql, *params| result }
@@ -52,6 +52,40 @@ module Stokla
 
           queue.take { raise "BOOM" }
         end
+      end
+    end
+
+    describe "#delete" do
+      let(:locking_item){ LockedItem.new(double(id: 100), [101, 100]) }
+      subject { queue.delete(locking_item) }
+
+      before { queue.send(:add_thread_lock, 100, 101) }
+
+      it "marks item as deleted" do
+        expect(queue).to receive(:execute).twice do |sql, *params|
+          if sql =~ /UPDATE/
+            expect(params).to eq([100])
+          end
+
+          if sql =~ /pg_advisory_unlock/
+            expect(params).to eq([101, 100, { connection: conn }])
+          end
+        end
+
+        subject
+      end
+
+      it "deletes item" do
+        original, Stokla.delete_after_completion = Stokla.delete_after_completion, true
+
+        expect(queue).to receive(:execute).twice do |sql, *params|
+          expect(sql).to match(/(DELETE FROM|pg_advisory_unlock)/)
+          expect(params).to eq([100]) if sql =~ /DELETE/
+        end
+
+        subject
+
+        Stokla.delete_after_completion = original
       end
     end
 

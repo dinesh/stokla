@@ -6,14 +6,14 @@ describe Stokla do
   end
 
   describe "#configure" do
-    let(:options){ { schema: 'public', table_name: 'jobs' }}
+    let(:options){ { schema: 'foo', table_name: 'bar' }}
 
     subject { Stokla.configure(options) }
     it 'should set attributes' do
       subject 
 
-      expect(Stokla.schema).to eq("public")
-      expect(Stokla.table_name).to eq("jobs")
+      expect(Stokla.schema).to eq("foo")
+      expect(Stokla.table_name).to eq("bar")
     end
   end
 
@@ -33,7 +33,7 @@ describe Stokla do
     end
   end
 
-  describe "#pool" do    
+  describe "#pool" do
     it 'gets' do
       conn = double
       Stokla.pool = double(checkout: conn)

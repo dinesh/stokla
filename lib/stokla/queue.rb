@@ -61,7 +61,6 @@ module Stokla
 
     def delete_item(locking_item)
       item_id = locking_item.item.id
-
       if Stokla.delete_after_completion
         execute("DELETE FROM #{quoted_table_name} WHERE id = $1", item_id)
       else
@@ -82,10 +81,11 @@ module Stokla
         qlocks, qlock_not_in, statement = nil
         
         sync {
-          qlocks       = @qlocks.select{|l| l[:conn_id] == connection.object_id }.map{|t| t[:lock_id] }.compact
-          qlock_not_in = qlocks.size > 0 ? "AND id NOT IN (#{qlocks.join(',')})"  : ""
-          statement = sql_statement(:lock_job).gsub(/_qlocks_not_in/, qlock_not_in)
+          qlocks = @qlocks.select{|l| l[:conn_id] == connection.object_id }.map{|t| t[:lock_id] }.compact
         }
+
+        qlock_not_in = qlocks.size > 0 ? "AND id NOT IN (#{qlocks.join(',')})"  : ""
+        statement = sql_statement(:lock_job).gsub(/_qlocks_not_in/, qlock_not_in)
 
         if record = connection.exec_params(statement, [table_oid, queue_name, Stokla.max_attempts]).first
           add_thread_lock(record['id'], connection.object_id)

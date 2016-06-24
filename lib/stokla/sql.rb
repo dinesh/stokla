@@ -84,6 +84,8 @@ module Stokla
 
     def connection_for_lock(conn_object_id)
       conn = Stokla.pool.get(conn_object_id)
+      raise "Unable to find connection for by object_id: #{conn_object_id}" unless conn
+
       yield(conn) if block_given?
       conn
     end
