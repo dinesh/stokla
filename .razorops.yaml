@@ -1,6 +1,13 @@
 tasks:
   unit-tests:
     docker:
-      image: ruby
+      image: ruby:2.3
       commands:
+        - gem install bundler
+        - bundle install
         - bundle exec rspec
+  test-env:
+    docker:
+      image: alpine
+      commands:
+        - test -n "$API_KEY"
