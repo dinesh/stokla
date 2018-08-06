@@ -1,0 +1,6 @@
+tasks:
+  unit-tests:
+    docker:
+      image: ruby
+      commands:
+        - bundle exec rspec
