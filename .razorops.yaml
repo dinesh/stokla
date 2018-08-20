@@ -1,13 +1,9 @@
 tasks:
+  build-image:
+    build:
+      image: dinesh/stokla
   unit-tests:
     docker:
-      image: ruby:2.3
+      image: dinesh/stokla
       commands:
-        - gem install bundler
-        - bundle install
         - bundle exec rspec
-  test-env:
-    docker:
-      image: alpine
-      commands:
-        - test -n "$API_KEY"
